@@ -13,7 +13,7 @@ cd
 
 
 # create new user and remove the default one
-read -p "Do you want to create a new user and delete default one? (y/n): " createUser
+read -p "Do you want to create a new user and delete default one? (y/N): " createUser
 if [ "$createUser" = "y" ]
 then
     echo "Creating new user. Which username you want?";
@@ -27,7 +27,7 @@ fi
 
 
 # improve ssh security
-read -p "Do you want to improve ssh connectivity? (y/n): " improveSsh
+read -p "Do you want to improve ssh connectivity? (y/N): " improveSsh
 if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
@@ -39,7 +39,7 @@ fi
 
 
 # setting static ip
-read -p "Do you want to set a static ip? (y/n): " setStaticIp
+read -p "Do you want to set a static ip? (y/N): " setStaticIp
 if [ "$setStaticIp" == "y" ]
 then
     echo "Setting up a static ip"
@@ -54,7 +54,7 @@ fi
 
 
 # install nodejs
-read -p "Do you want to install nodejs? (y/n): " installNode
+read -p "Do you want to install nodejs? (y/N): " installNode
 if [ "$installNode" == "y" ]
 then
     wget https://nodejs.org/dist/v9.9.0/node-v9.9.0-linux-armv6l.tar.gz
@@ -68,7 +68,7 @@ fi
 
 
 # install and configure homebridge
-read -p "Do you want to install and configure homebridge? (y/n): " installHomebridge
+read -p "Do you want to install and configure homebridge? (y/N): " installHomebridge
 if [ "$installHomebridge" == "y" ]
 then
     echo "Installing homebridge"
@@ -140,13 +140,13 @@ fi
 
 
 # some raspi configurations
-read -p "Do you want to configure raspberry? (y/n): " raspiSetup
+read -p "Do you want to configure raspberry? (y/N): " raspiSetup
 if [ "$raspiSetup" == "y" ]
 then
     sudo raspi-config
 fi
 
-read -p "Do you want to reboot now? (y/n): " rebootNow
+read -p "Do you want to reboot now? (y/N): " rebootNow
 if [ "$rebootNow" == "y" ]
 then
     sudo reboot
