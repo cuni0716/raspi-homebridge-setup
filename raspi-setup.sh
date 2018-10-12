@@ -31,7 +31,7 @@ read -p "Do you want to improve ssh connectivity? (y/N): " improveSsh
 if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
-    /etc/init.d/ssh restart;
+    sudo /etc/init.d/ssh restart;
     echo "AllowUsers $user" >> /etc/ssh/sshd_config;
     echo "DenyUsers pi";
     exit;
@@ -83,11 +83,15 @@ then
 
     mkdir -p .homebridge
 
-    cp conf/loxone.config.json .homebridge/config.json
+    cp  ./raspi-setupconf/conf/loxone.config.json .homebridge/config.json
 
-    sudo cp conf/homebridge.default /etc/homebridge
+    sed  s/$env.port/$port/g >> .homebridge/config.json
+    sed  s/$env.username/$username/g >> .homebridge/config.json
+    sed  s/$env.password/$password/g >> .homebridge/config.json
 
-    sudo cp  config/homebridge.service /etc/systemd/system/homebridge.service
+    sudo cp ./raspi-setupconf/homebridge.default /etc/homebridge
+
+    sudo cp  ./raspi-setupconfig/homebridge.service /etc/systemd/system/homebridge.service
 
     sudo mkdir /var/homebridge
     sudo cp ~/.homebridge/config.json /var/homebridge/
