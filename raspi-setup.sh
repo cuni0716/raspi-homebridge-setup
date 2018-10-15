@@ -39,6 +39,8 @@ fi
 
 
 # setting static ip
+defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+
 read -p "Do you want to set a static IP? (y/N): " setStaticIp
 echo "You default IP is:  $defaultIP"
 read -p "Do you want to use you default IP? (y/N):" setDefaultIp
@@ -48,7 +50,7 @@ then
     if [ "$setDefaultIp" == "y"]
     then
         echo "Setting up a default IP"
-        defaultGateway=$()
+        defaultGateway=$(route -n|grep "UG"|grep -v "UGH"|cut -f 10 -d " ")
         ip_address=$defaultIP
         routers=$defaultGateway
         domain_name_servers=$defaultGateway
