@@ -39,17 +39,34 @@ fi
 
 
 # setting static ip
-read -p "Do you want to set a static ip? (y/N): " setStaticIp
+read -p "Do you want to set a static IP? (y/N): " setStaticIp
+echo "You default IP is:  $defaultIP"
+read -p "Do you want to use you default IP? (y/N):" setDefaultIp
 if [ "$setStaticIp" == "y" ]
 then
-    echo "Setting up a static ip"
-    read -p "Type the range you want: " range
-    read -p "Type the ip you want: " ip
+    echo "Setting up a static IP"
+    if [ "$setDefaultIp" == "y"]
+    then
+        echo "Setting up a default IP"
+        defaultGateway=$()
+        ip_address=$defaultIP
+        routers=$defaultGateway
+        domain_name_servers=$defaultGateway
+
+    else
+        echo "Setting up a personal ip"
+        read -p "Type the range you want: " range
+        read -p "Type the ip you want: " ip
+        ip_address="192.168.$range.$ip"
+        routes="192.168.$range.1"
+        domain_name_servers="192.168.$range.1"
+    fi
+
     sudo su
     echo "interface eth0" >> /etc/dhcpcd.conf
-    echo "static ip_address=192.168.$range.$ip" >> /etc/dhcpcd.conf
-    echo "static routers=192.168.$range.1" >> /etc/dhcpcd.conf
-    echo "static domain_name_servers=192.168.$range.1" >> /etc/dhcpcd.conf
+    echo "static ip_address=$ip_address" >> /etc/dhcpcd.conf
+    echo "static routers=$routes" >> /etc/dhcpcd.conf
+    echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
 fi
 
 
