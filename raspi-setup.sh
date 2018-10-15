@@ -37,6 +37,24 @@ then
     exit;
 fi
 
+# raspberry version
+REVCODE=$(sudo cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}' | sed 's/^ *//g' | sed 's/ *$//g')
+if [ "$REVCODE" = "a01041" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.0, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a21041" ]; then
+    # a21041 (Embest, China)
+    PIMODEL="Raspberry Pi 2 Model B v1.1, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a22042" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.2, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a22082" ]; then
+    PIMODEL="Raspberry Pi 3 Model B, 1 GB RAM"
+fi
 
 # setting static ip
 defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
@@ -44,6 +62,10 @@ defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([
 read -p "Do you want to set a static IP? (y/N): " setStaticIp
 echo "You default IP is:  $defaultIP"
 read -p "Do you want to use you default IP? (y/N):" setDefaultIp
+if [ "$REVCODE" = "a22082" ]; then
+    read -p "Do you have a $PIMODEL, do you can use Wifi? (y/N):" setWifi
+fi
+
 if [ "$setStaticIp" == "y" ]
 then
     echo "Setting up a static IP"
@@ -70,7 +92,6 @@ then
     echo "static routers=$routes" >> /etc/dhcpcd.conf
     echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
 fi
-
 
 # install nodejs
 read -p "Do you want to install nodejs? (y/N): " installNode
