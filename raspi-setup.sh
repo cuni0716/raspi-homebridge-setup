@@ -31,28 +31,82 @@ read -p "Do you want to improve ssh connectivity? (y/N): " improveSsh
 if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
-    /etc/init.d/ssh restart;
+    sudo /etc/init.d/ssh restart;
     echo "AllowUsers $user" >> /etc/ssh/sshd_config;
     echo "DenyUsers pi";
     exit;
 fi
 
-
-# setting static ip
-read -p "Do you want to set a static ip? (y/N): " setStaticIp
-if [ "$setStaticIp" == "y" ]
-then
-    echo "Setting up a static ip"
-    read -p "Type the range you want: " range
-    read -p "Type the ip you want: " ip
-    sudo su
-    echo "interface eth0" >> /etc/dhcpcd.conf
-    echo "static ip_address=192.168.$range.$ip" >> /etc/dhcpcd.conf
-    echo "static routers=192.168.$range.1" >> /etc/dhcpcd.conf
-    echo "static domain_name_servers=192.168.$range.1" >> /etc/dhcpcd.conf
+# raspberry version
+REVCODE=$(sudo cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}' | sed 's/^ *//g' | sed 's/ *$//g')
+if [ "$REVCODE" = "a01041" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.0, 1 GB RAM"
 fi
 
+if [ "$REVCODE" = "a21041" ]; then
+    # a21041 (Embest, China)
+    PIMODEL="Raspberry Pi 2 Model B v1.1, 1 GB RAM"
+fi
 
+if [ "$REVCODE" = "a22042" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.2, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a22082" ]; then
+    PIMODEL="Raspberry Pi 3 Model B, 1 GB RAM"
+fi
+
+# setting static ip
+defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+
+read -p "Do you want to set a static IP? (y/N): " setStaticIp
+echo "You default IP is:  $defaultIP"
+read -p "Do you want to use you default IP? (y/N):" setDefaultIp
+if [ "$REVCODE" = "a22082" ]; then
+    read -p "Do you have a $PIMODEL, do you can use Wifi? (y/N):" setWifi
+fi
+
+if [ "$setStaticIp" == "y" ]
+then
+    echo "Setting up a static IP"
+    if [ "$setDefaultIp" == "y"]
+    then
+        echo "Setting up a default IP"
+        defaultGateway=$(route -n|grep "UG"|grep -v "UGH"|cut -f 10 -d " ")
+        ip_address=$defaultIP
+        routers=$defaultGateway
+        domain_name_servers=$defaultGateway
+
+    else
+        echo "Setting up a personal ip"
+        read -p "Type the range you want: " range
+        read -p "Type the ip you want: " ip
+        ip_address="192.168.$range.$ip"
+        routes="192.168.$range.1"
+        domain_name_servers="192.168.$range.1"
+    fi
+
+    sudo su
+    echo "interface eth0" >> /etc/dhcpcd.conf
+    echo "static ip_address=$ip_address" >> /etc/dhcpcd.conf
+    echo "static routers=$routes" >> /etc/dhcpcd.conf
+    echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
+fi
+
+if [ "$setWifi" == "y"]
+then
+    read -p "Wifi SSID: " wifiSSID
+    read -p "Wifi Password: " wifiPassword
+   
+    {
+    echo 'country=ES'
+    echo ''
+    echo 'network={'
+	echo '   ssid="$wifiSSID"'
+	echo '   psk="$wifiPassword"'
+    echo '}'
+    } >> /etc/wpa_supplicant/wpa_supplicant.conf
+fi
 # install nodejs
 read -p "Do you want to install nodejs? (y/N): " installNode
 if [ "$installNode" == "y" ]
@@ -83,11 +137,15 @@ then
 
     mkdir -p .homebridge
 
-    cp conf/loxone.config.json .homebridge/config.json
+    cp  ./raspi-setupconf/conf/loxone.config.json .homebridge/config.json
 
-    sudo cp conf/homebridge.default /etc/homebridge
+    sed  s/$env.port/$port/g >> .homebridge/config.json
+    sed  s/$env.username/$username/g >> .homebridge/config.json
+    sed  s/$env.password/$password/g >> .homebridge/config.json
 
-    sudo cp  config/homebridge.service /etc/systemd/system/homebridge.service
+    sudo cp ./raspi-setupconf/homebridge.default /etc/homebridge
+
+    sudo cp  ./raspi-setupconfig/homebridge.service /etc/systemd/system/homebridge.service
 
     sudo mkdir /var/homebridge
     sudo cp ~/.homebridge/config.json /var/homebridge/
