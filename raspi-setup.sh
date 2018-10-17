@@ -3,7 +3,7 @@
 # DOCS
 # https://github.com/nfarina/homebridge
 # https://github.com/Sroose/homebridge-loxone-ws
-# https://www.raspberrypi.org/learning/networking-lessons:rpi-static-ip-address:
+# https://www.raspberrypi.org/learning/networking-lessonsr/pi-static-ip-address
 # https://www.instructables.com/id/Install-Nodejs-and-Npm-on-Raspberry-Pi/
 # https://timleland.com/setup-homidge-to-start-on-bootup/
 
