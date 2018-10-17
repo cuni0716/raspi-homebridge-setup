@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # DOCS
-# https://github.com/nfarina/homebridge
-# https://github.com/Sroose/homebridge-loxone-ws
-# https://www.raspberrypi.org/learning/networking-lessons/rpi-static-ip-address/
+# https:/:github.com/nfarina/homebridge
+# https:/:github.com/Sroose/homebridge-loxone-ws
+# https://www.raspberrypi.org/learning/networking-lessons:rpi-static-ip-address:
 # https://www.instructables.com/id/Install-Nodejs-and-Npm-on-Raspberry-Pi/
 # https://timleland.com/setup-homidge-to-start-on-bootup/
 
@@ -32,13 +32,12 @@ if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
     sudo /etc/init.d/ssh restart;
-    echo "AllowUsers $user" >> /etc/ssh/sshd_config;
-    echo "DenyUsers pi";
-    exit;
+    sudo echo "AllowUsers $user" >> /etc/ssh/sshd_config;
+    sudo echo "DenyUsers pi";
 fi
 
 # raspberry version
-REVCODE=$(sudo cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}' | sed 's/^ *//g' | sed 's/ *$//g')
+REVCODE=$(sudo cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
 if [ "$REVCODE" = "a01041" ]; then
     PIMODEL="Raspberry Pi 2 Model B v1.0, 1 GB RAM"
 fi
@@ -52,7 +51,7 @@ if [ "$REVCODE" = "a22042" ]; then
     PIMODEL="Raspberry Pi 2 Model B v1.2, 1 GB RAM"
 fi
 
-if [ "$REVCODE" = "a22082" ]; then
+if [ "$REVCODE" = "a020d3" ]; then
     PIMODEL="Raspberry Pi 3 Model B, 1 GB RAM"
 fi
 
@@ -60,16 +59,18 @@ fi
 defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
 
 read -p "Do you want to set a static IP? (y/N): " setStaticIp
-echo "You default IP is:  $defaultIP"
-read -p "Do you want to use you default IP? (y/N):" setDefaultIp
-if [ "$REVCODE" = "a22082" ]; then
+
+if [ "$REVCODE" = "a020d3" ]; then
     read -p "Do you have a $PIMODEL, do you can use Wifi? (y/N):" setWifi
 fi
 
 if [ "$setStaticIp" == "y" ]
 then
     echo "Setting up a static IP"
-    if [ "$setDefaultIp" == "y"]
+    echo "You default IP is:  $defaultIP"
+    read -p "Do you want to use you default IP? (y/N):" setDefaultIp 
+    
+    if [ "$setDefaultIp" == "y" ]
     then
         echo "Setting up a default IP"
         defaultGateway=$(route -n|grep "UG"|grep -v "UGH"|cut -f 10 -d " ")
@@ -86,14 +87,13 @@ then
         domain_name_servers="192.168.$range.1"
     fi
 
-    sudo su
-    echo "interface eth0" >> /etc/dhcpcd.conf
-    echo "static ip_address=$ip_address" >> /etc/dhcpcd.conf
-    echo "static routers=$routes" >> /etc/dhcpcd.conf
-    echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
+    sudo echo "interface eth0" >> /etc/dhcpcd.conf
+    sudo echo "static ip_address=$ip_address" >> /etc/dhcpcd.conf
+    sudo echo "static routers=$routes" >> /etc/dhcpcd.conf
+    sudo echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
 fi
 
-if [ "$setWifi" == "y"]
+if [ "$setWifi" == "y" ]
 then
     read -p "Wifi SSID: " wifiSSID
     read -p "Wifi Password: " wifiPassword
@@ -126,9 +126,9 @@ read -p "Do you want to install and configure homebridge? (y/N): " installHomebr
 if [ "$installHomebridge" == "y" ]
 then
     echo "Installing homebridge"
-    npm install --global homebridge
+    #npm install --global homebridge
     echo "Installing loxone plugin"
-    npm install --global homebridge-loxone-ws
+    #npm install --global homebridge-loxone-ws
     echo "Configuring Loxone platform"
     read -p "Host: " host
     read -p "Port: " port
@@ -137,19 +137,22 @@ then
 
     mkdir -p .homebridge
 
-    cp  ./raspi-setupconf/conf/loxone.config.json .homebridge/config.json
+    cp  ~/raspi-homebridge-setup/config/loxone.config.json .homebridge/config.json
+    
+    sed -i "s/envhost/$host/g" ~/.homebridge/config.json
+    sed -i "s/envport/$port/g" ~/.homebridge/config.json
+    sed -i "s/envusername/$username/g" ~/.homebridge/config.json
+    sed -i "s/envpassword/$password:/g" ~/.homebridge/config.json
 
-    sed  s/$env.port/$port/g >> .homebridge/config.json
-    sed  s/$env.username/$username/g >> .homebridge/config.json
-    sed  s/$env.password/$password/g >> .homebridge/config.json
+    cat ~/.homebridge/config.json
 
-    sudo cp ./raspi-setupconf/homebridge.default /etc/homebridge
+    sudo cp ~/raspi-homebridge-setup/config/homebridge.default /etc/homebridge
 
-    sudo cp  ./raspi-setupconfig/homebridge.service /etc/systemd/system/homebridge.service
+    sudo cp  ~/raspi-homebridge-setup/config/homebridge.service /etc/systemd/system/homebridge.service
 
     sudo mkdir /var/homebridge
+    sudo mkdir /var/homebridge/persist
     sudo cp ~/.homebridge/config.json /var/homebridge/
-    sudo cp -r ~/.homebridge/persist /var/homebridge
     sudo chmod -R 0664 /var/homebridge
     sudo systemctl daemon-reload
     sudo systemctl enable homebridge

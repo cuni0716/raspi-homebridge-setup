@@ -10,10 +10,10 @@
         { 
             "platform": "LoxoneWs", 
             "name": "Loxone", 
-            "host": "$env.host", 
-            "port": "$env.port",
-            "username": "$env.username",
-            "password": "$env.password"
+            "host": "envhost", 
+            "port": "envport",
+            "username": "envusername",
+            "password": "envpassword"
         }
     ]
 } 
