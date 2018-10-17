@@ -126,9 +126,9 @@ read -p "Do you want to install and configure homebridge? (y/N): " installHomebr
 if [ "$installHomebridge" == "y" ]
 then
     echo "Installing homebridge"
-    #npm install --global homebridge
+    npm install --global homebridge
     echo "Installing loxone plugin"
-    #npm install --global homebridge-loxone-ws
+    npm install --global homebridge-loxone-ws
     echo "Configuring Loxone platform"
     read -p "Host: " host
     read -p "Port: " port
