@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # DOCS
-# https:/:github.com/nfarina/homebridge
-# https:/:github.com/Sroose/homebridge-loxone-ws
+# https://github.com/nfarina/homebridge
+# https://github.com/Sroose/homebridge-loxone-ws
 # https://www.raspberrypi.org/learning/networking-lessons:rpi-static-ip-address:
 # https://www.instructables.com/id/Install-Nodejs-and-Npm-on-Raspberry-Pi/
 # https://timleland.com/setup-homidge-to-start-on-bootup/
@@ -32,8 +32,8 @@ if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
     sudo /etc/init.d/ssh restart;
-    sudo echo "AllowUsers $user" >> /etc/ssh/sshd_config;
-    sudo echo "DenyUsers pi";
+    echo "AllowUsers $user" >> /etc/ssh/sshd_config;
+    echo "DenyUsers pi";
 fi
 
 # raspberry version
