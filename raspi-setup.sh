@@ -3,7 +3,7 @@
 # DOCS
 # https://github.com/nfarina/homebridge
 # https://github.com/Sroose/homebridge-loxone-ws
-# https://www.raspberrypi.org/learning/networking-lessons/rpi-static-ip-address/
+# https://www.raspberrypi.org/learning/networking-lessonsr/pi-static-ip-address
 # https://www.instructables.com/id/Install-Nodejs-and-Npm-on-Raspberry-Pi/
 # https://timleland.com/setup-homidge-to-start-on-bootup/
 
@@ -31,28 +31,82 @@ read -p "Do you want to improve ssh connectivity? (y/N): " improveSsh
 if [ "$improveSsh" == "y" ]
 then
     echo "Improving ssh connectivity";
-    apt install openssh-server;
+    sudo /etc/init.d/ssh restart;
     echo "AllowUsers $user" >> /etc/ssh/sshd_config;
     echo "DenyUsers pi";
-    exit;
 fi
 
+# raspberry version
+REVCODE=$(sudo cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
+if [ "$REVCODE" = "a01041" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.0, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a21041" ]; then
+    # a21041 (Embest, China)
+    PIMODEL="Raspberry Pi 2 Model B v1.1, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a22042" ]; then
+    PIMODEL="Raspberry Pi 2 Model B v1.2, 1 GB RAM"
+fi
+
+if [ "$REVCODE" = "a020d3" ]; then
+    PIMODEL="Raspberry Pi 3 Model B, 1 GB RAM"
+fi
 
 # setting static ip
-read -p "Do you want to set a static ip? (y/N): " setStaticIp
-if [ "$setStaticIp" == "y" ]
-then
-    echo "Setting up a static ip"
-    read -p "Type the range you want: " range
-    read -p "Type the ip you want: " ip
-    sudo su
-    echo "interface eth0" >> /etc/dhcpcd.conf
-    echo "static ip_address=192.168.$range.$ip" >> /etc/dhcpcd.conf
-    echo "static routers=192.168.$range.1" >> /etc/dhcpcd.conf
-    echo "static domain_name_servers=192.168.$range.1" >> /etc/dhcpcd.conf
+defaultIP=$(ip addr | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+
+read -p "Do you want to set a static IP? (y/N): " setStaticIp
+
+if [ "$REVCODE" = "a020d3" ]; then
+    read -p "Do you have a $PIMODEL, do you can use Wifi? (y/N):" setWifi
 fi
 
+if [ "$setStaticIp" == "y" ]
+then
+    echo "Setting up a static IP"
+    echo "You default IP is:  $defaultIP"
+    read -p "Do you want to use you default IP? (y/N):" setDefaultIp 
+    
+    if [ "$setDefaultIp" == "y" ]
+    then
+        echo "Setting up a default IP"
+        defaultGateway=$(route -n|grep "UG"|grep -v "UGH"|cut -f 10 -d " ")
+        ip_address=$defaultIP
+        routers=$defaultGateway
+        domain_name_servers=$defaultGateway
 
+    else
+        echo "Setting up a personal ip"
+        read -p "Type the range you want: " range
+        read -p "Type the ip you want: " ip
+        ip_address="192.168.$range.$ip"
+        routes="192.168.$range.1"
+        domain_name_servers="192.168.$range.1"
+    fi
+
+    sudo echo "interface eth0" >> /etc/dhcpcd.conf
+    sudo echo "static ip_address=$ip_address" >> /etc/dhcpcd.conf
+    sudo echo "static routers=$routes" >> /etc/dhcpcd.conf
+    sudo echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
+fi
+
+if [ "$setWifi" == "y" ]
+then
+    read -p "Wifi SSID: " wifiSSID
+    read -p "Wifi Password: " wifiPassword
+   
+    {
+    echo 'country=ES'
+    echo ''
+    echo 'network={'
+	echo '   ssid="$wifiSSID"'
+	echo '   psk="$wifiPassword"'
+    echo '}'
+    } >> /etc/wpa_supplicant/wpa_supplicant.conf
+fi
 # install nodejs
 read -p "Do you want to install nodejs? (y/N): " installNode
 if [ "$installNode" == "y" ]
@@ -82,56 +136,24 @@ then
     read -p "Password: " password
 
     mkdir -p .homebridge
-    touch .homebridge/config.json
 
-    echo "{" >> .homebridge/config.json
-    echo "    \"bridge\": {" >> .homebridge/config.json
-    echo "        \"name\": \"Homebridge\"," >> .homebridge/config.json
-    echo "        \"username\": \"CA:AA:12:34:56:78\"," >> .homebridge/config.json
-    echo "        \"port\": 51826," >> .homebridge/config.json
-    echo "        \"pin\": \"012-34-567\"" >> .homebridge/config.json
-    echo "    }," >> .homebridge/config.json
-    echo "    \"description\": \"Your config file.\"," >> .homebridge/config.json
-    echo "    \"platforms\": [" >> .homebridge/config.json
-    echo "        {" >> .homebridge/config.json
-    echo "            \"platform\": \"LoxoneWs\"," >> .homebridge/config.json
-    echo "            \"name\": \"Loxone\"," >> .homebridge/config.json
-    echo "            \"host\": \"$host\"," >> .homebridge/config.json
-    echo "            \"port\": \"$port\"," >> .homebridge/config.json
-    echo "            \"username\": \"$username\"," >> .homebridge/config.json
-    echo "            \"password\": \"$password\"" >> .homebridge/config.json
-    echo "        }" >> .homebridge/config.json
-    echo "    ]" >> .homebridge/config.json
-    echo "}" >> .homebridge/config.json
+    cp  ~/raspi-homebridge-setup/config/loxone.config.json .homebridge/config.json
+    
+    sed -i "s/envhost/$host/g" ~/.homebridge/config.json
+    sed -i "s/envport/$port/g" ~/.homebridge/config.json
+    sed -i "s/envusername/$username/g" ~/.homebridge/config.json
+    sed -i "s/envpassword/$password:/g" ~/.homebridge/config.json
 
-    echo "# Defaults / Configuration options for homebridge" >> /etc/default/homebridge
-    echo "# The following settings tells homebridge where to find the config.json file and where to persist the data (i.e. pairing and others)" >> /etc/default/homebridge
-    echo "HOMEBRIDGE_OPTS=-U /var/homebridge" >> /etc/default/homebridge
-    echo "" >> /etc/default/homebridge
-    echo "# If you uncomment the following line, homebridge will log more " >> /etc/default/homebridge
-    echo "# You can display this via systemd's journalctl: journalctl -f -u homebridge" >> /etc/default/homebridge
-    echo "# DEBUG=*" >> /etc/default/homebridge
+    cat ~/.homebridge/config.json
 
-    sudo echo "[Unit]" >> /etc/systemd/system/homebridge.service
-    sudo echo "Description=Node.js HomeKit Server " >> /etc/systemd/system/homebridge.service
-    sudo echo "After=syslog.target network-online.target" >> /etc/systemd/system/homebridge.service
-    sudo echo "" >> /etc/systemd/system/homebridge.service
-    sudo echo "[Service]" >> /etc/systemd/system/homebridge.service
-    sudo echo "Type=simple" >> /etc/systemd/system/homebridge.service
-    sudo echo "User=homebridge" >> /etc/systemd/system/homebridge.service
-    sudo echo "EnvironmentFile=/etc/default/homebridge" >> /etc/systemd/system/homebridge.service
-    sudo echo "ExecStart=$(which homebridge) $HOMEBRIDGE_OPTS" >> /etc/systemd/system/homebridge.service
-    sudo echo "Restart=on-failure" >> /etc/systemd/system/homebridge.service
-    sudo echo "RestartSec=10" >> /etc/systemd/system/homebridge.service
-    sudo echo "KillMode=process" >> /etc/systemd/system/homebridge.service
-    sudo echo "" >> /etc/systemd/system/homebridge.service
-    sudo echo "[Install]" >> /etc/systemd/system/homebridge.service
-    sudo echo "WantedBy=multi-user.target" >> /etc/systemd/system/homebridge.service
+    sudo cp ~/raspi-homebridge-setup/config/homebridge.default /etc/homebridge
+
+    sudo cp  ~/raspi-homebridge-setup/config/homebridge.service /etc/systemd/system/homebridge.service
 
     sudo mkdir /var/homebridge
+    sudo mkdir /var/homebridge/persist
     sudo cp ~/.homebridge/config.json /var/homebridge/
-    sudo cp -r ~/.homebridge/persist /var/homebridge
-    sudo chmod -R 0777 /var/homebridge
+    sudo chmod -R 0664 /var/homebridge
     sudo systemctl daemon-reload
     sudo systemctl enable homebridge
     sudo systemctl start homebridge

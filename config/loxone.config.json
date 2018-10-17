@@ -1,0 +1,19 @@
+{ 
+    "bridge": { 
+        "name": "Homebridge",
+        "username": "CA:AA:12:34:56:78",
+        "port": "51826", 
+        "pin": "012-34-567"
+      },
+    "description": "Your config file.",
+    "platforms": [ 
+        { 
+            "platform": "LoxoneWs", 
+            "name": "Loxone", 
+            "host": "envhost", 
+            "port": "envport",
+            "username": "envusername",
+            "password": "envpassword"
+        }
+    ]
+} 
