@@ -93,6 +93,20 @@ then
     echo "static domain_name_servers=$domain_name_servers" >> /etc/dhcpcd.conf
 fi
 
+if [ "$setWifi" == "y"]
+then
+    read -p "Wifi SSID: " wifiSSID
+    read -p "Wifi Password: " wifiPassword
+   
+    {
+    echo 'country=ES'
+    echo ''
+    echo 'network={'
+	echo '   ssid="$wifiSSID"'
+	echo '   psk="$wifiPassword"'
+    echo '}'
+    } >> /etc/wpa_supplicant/wpa_supplicant.conf
+fi
 # install nodejs
 read -p "Do you want to install nodejs? (y/N): " installNode
 if [ "$installNode" == "y" ]
