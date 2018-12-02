@@ -21,8 +21,7 @@ then
     sudo adduser $user;
     sudo adduser $user sudo;
     sudo su;
-    sudo deluser pi;
-    sudo deluser -remove-home pi;
+    deluser -remove-home pi;
 fi
 
 
